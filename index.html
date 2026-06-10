@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Lançamentos Pabu - Real Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white p-10 font-sans">
+
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-4xl font-bold mb-2">Lançamentos - Pabu</h1>
+        <p class="text-gray-400 mb-8">Monitoramento em tempo real da campanha =LANÇAMENTOS</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 shadow-lg">
+                <h2 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Visitas na Categoria</h2>
+                <p id="total-visits" class="text-5xl font-bold text-blue-400">0</p>
+                <p id="growth" class="text-sm text-green-400 mt-3 font-medium">Crescimento: 0%</p>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 shadow-lg">
+                <h2 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Peça Mais Acessada</h2>
+                <p id="top-product" class="text-2xl font-bold text-yellow-400 mt-2 truncate">-</p>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 shadow-lg">
+                <h2 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Marca Mais Acessada</h2>
+                <p id="top-brand" class="text-2xl font-bold text-purple-400 mt-2 truncate">-</p>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 shadow-lg md:col-span-3">
+                <h2 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Peça Mais Comprada</h2>
+                <p id="top-purchased" class="text-3xl font-bold text-green-400 mt-2">-</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Conecta ao seu servidor Render recém-criado
+        const socket = io('https://painel-lancamentos-api.onrender.com');
+
+        function getTopItem(obj) {
+            const keys = Object.keys(obj);
+            if (keys.length === 0) return '-';
+            return keys.reduce((a, b) => obj[a] > obj[b] ? a : b);
+        }
+
+        socket.on('connect', () => {
+            console.log('Conectado ao servidor com sucesso!');
+        });
+
+        // Escuta as atualizações em tempo real
+        socket.on('metrics_update', (data) => {
+            const { metrics, growth } = data;
+
+            document.getElementById('total-visits').innerText = metrics.visits;
+            document.getElementById('growth').innerText = `Crescimento: ${growth}% (vs base)`;
+            
+            document.getElementById('top-product').innerText = getTopItem(metrics.viewsByProduct);
+            document.getElementById('top-brand').innerText = getTopItem(metrics.viewsByBrand);
+            document.getElementById('top-purchased').innerText = getTopItem(metrics.purchasesByProduct);
+        });
+    </script>
+</body>
+</html>
